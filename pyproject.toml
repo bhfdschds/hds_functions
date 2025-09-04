@@ -1,0 +1,82 @@
+[tool.poetry] 
+name = "hds-functions"
+version = "1.0.0"
+description = "PySpark utilities developed by the BHF-DSC HDS team for working in NHS-E Secure Data Environment."
+authors = ["BHF-DSC Health Data Scientist Team <bhfdsc_hds@hdruk.ac.uk>"]
+readme = "README.md"
+packages = [{ include = "hds_functions", from = "src" }]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyspark = "3.5.1"
+pandas = ">=1.0.5"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+pytest-cov = "^4.1"
+pyarrow = ">=4.0.0"
+numpy = "<2.0.0"
+python-semantic-release = "^8.0"
+build = "^1.0"
+setuptools = "^68.0"
+
+[tool.poetry.group.lint.dependencies]
+ruff = "^0.12.7"
+
+[tool.semantic_release]
+version_source = "tag"
+version_toml = ["pyproject.toml:tool.poetry.version"]
+version_variables = ["src/hds_functions/__init__.py:__version__"]
+branch = "main"
+upload_to_pypi = false
+upload_to_release = true
+commit_version_number = true
+commit_message = "chore(release): v{version} [skip ci]"
+commit_author = "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+    "build",
+    "chore",
+    "ci",
+    "docs",
+    "feat",
+    "fix",
+    "perf",
+    "style",
+    "refactor",
+    "test"
+]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=hds_functions --cov-report=term-missing"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle (style errors)
+    "F",  # pyflakes (logical errors)
+    "B",  # flake8-bugbear (common bugs)
+    "I",  # isort (import sorting)
+    "D",  # pydocstyle (docstrings)
+]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
