@@ -1,0 +1,107 @@
+name: Dev - Lint & Test 
+
+on:
+  pull_request:
+    branches: [dev]
+    
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Ruff Lint & Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v3
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/bin:$PATH"
+
+      - name: Install lint dependencies (ruff)
+        run: poetry install --no-root --with lint
+
+      - name: Lint with Ruff
+        run: poetry run ruff check .
+
+      - name: Check formatting with Ruff
+        run: poetry run ruff format --check .
+
+  test:
+    name: Pytest Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+
+      - name: Add Poetry to PATH
+        run: echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
+      - name: Cache Spark
+        id: cache-spark
+        uses: actions/cache@v3
+        with:
+          path: spark-3.5.6-bin-hadoop3
+          key: spark-3.5.6-${{ runner.os }}
+
+      - name: Download and extract Spark (if cache missed)
+        if: steps.cache-spark.outputs.cache-hit != 'true'
+        run: |
+          curl -v -L https://dlcdn.apache.org/spark/spark-3.5.6/spark-3.5.6-bin-hadoop3.tgz -o spark.tgz
+          tar -xzf spark.tgz
+          rm spark.tgz
+
+      - name: Save Spark to cache
+        if: steps.cache-spark.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: spark-3.5.6-bin-hadoop3
+          key: spark-3.5.6-${{ runner.os }}
+
+      - name: Set environment variables
+        run: |
+          echo "SPARK_HOME=$(pwd)/spark-3.5.6-bin-hadoop3" >> $GITHUB_ENV
+          echo "$(pwd)/spark-3.5.6-bin-hadoop3/bin" >> $GITHUB_PATH
+          echo "PYARROW_IGNORE_TIMEZONE=1" >> $GITHUB_ENV
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install dependencies with Poetry
+        run: poetry install --with dev
+
+      - name: Run tests
+        run: poetry run pytest
