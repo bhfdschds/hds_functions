@@ -13,7 +13,7 @@ from .environment_utils import find_project_folder
 from .json_utils import read_json_file, write_json_file
 from .table_management import load_table, save_table
 
-__version__ = "0.0.1"
+__version__ = "1.0.0"
 
 __all__ = [
     "apply_inclusion_criteria",
